@@ -29,10 +29,8 @@ local cps = 10
 local infJump = false
 local fullBrightEnabled = false
 
--- Глобальные координаты телепорта
-_G.TeleportX = 0
-_G.TeleportY = 0
-_G.TeleportZ = 0
+-- Выбранная точка телепорта мышью
+local targetPos = nil
 
 -- Обновление персонажа
 local function refreshCharacter()
@@ -99,41 +97,21 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Instant Teleport с выбором координат
-MainTab:CreateInput({
-    Name = "Teleport X",
-    PlaceholderText = "Введите X",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Value)
-        _G.TeleportX = tonumber(Value) or 0
+-- Выбор точки мышью
+mouse.Button2Down:Connect(function()
+    if mouse.Target then
+        targetPos = mouse.Hit.Position
+        print("Точка телепорта выбрана:", targetPos)
     end
-})
+end)
 
-MainTab:CreateInput({
-    Name = "Teleport Y",
-    PlaceholderText = "Введите Y",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Value)
-        _G.TeleportY = tonumber(Value) or 0
-    end
-})
-
-MainTab:CreateInput({
-    Name = "Teleport Z",
-    PlaceholderText = "Введите Z",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Value)
-        _G.TeleportZ = tonumber(Value) or 0
-    end
-})
-
+-- Кнопка телепорта на выбранную точку
 MainTab:CreateButton({
-    Name = "Instant Teleport",
+    Name = "Teleport to Mouse Point",
     Callback = function()
         refreshCharacter()
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local targetPosition = Vector3.new(_G.TeleportX, _G.TeleportY, _G.TeleportZ)
-            character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+        if targetPos and character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0,3,0))
         end
     end
 })
@@ -208,7 +186,7 @@ MiscTab:CreateToggle({
     end,
 })
 
--- Безопасный автокликер
+-- Автокликер
 MiscTab:CreateToggle({
     Name = "AutoClicker",
     CurrentValue = false,
