@@ -29,6 +29,11 @@ local cps = 10
 local infJump = false
 local fullBrightEnabled = false
 
+-- Глобальные координаты телепорта
+_G.TeleportX = 0
+_G.TeleportY = 0
+_G.TeleportZ = 0
+
 -- Обновление персонажа
 local function refreshCharacter()
     character = player.Character or player.CharacterAdded:Wait()
@@ -94,19 +99,43 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- Instant Teleport с выбором координат
+MainTab:CreateInput({
+    Name = "Teleport X",
+    PlaceholderText = "Введите X",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        _G.TeleportX = tonumber(Value) or 0
+    end
+})
+
+MainTab:CreateInput({
+    Name = "Teleport Y",
+    PlaceholderText = "Введите Y",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        _G.TeleportY = tonumber(Value) or 0
+    end
+})
+
+MainTab:CreateInput({
+    Name = "Teleport Z",
+    PlaceholderText = "Введите Z",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        _G.TeleportZ = tonumber(Value) or 0
+    end
+})
+
 MainTab:CreateButton({
-    Name = "Instant Respawn",
+    Name = "Instant Teleport",
     Callback = function()
         refreshCharacter()
         if character and character:FindFirstChild("HumanoidRootPart") then
-            local spawnLocation = player.SpawnLocation -- текущий спавн игрока
-            if spawnLocation then
-                character.HumanoidRootPart.CFrame = spawnLocation.CFrame + Vector3.new(0,5,0)
-            else
-                character:MoveTo(Vector3.new(0,10,0))
-            end
+            local targetPosition = Vector3.new(_G.TeleportX, _G.TeleportY, _G.TeleportZ)
+            character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
         end
-    end,
+    end
 })
 
 -- Вкладка Others
@@ -263,7 +292,7 @@ MiscTab:CreateButton({
         for _,v in pairs(workspace:GetDescendants()) do
             if not v:IsDescendantOf(player.Character) then
                 if v:IsA("Texture") or v:IsA("Decal") then
-                    v.Color3 = Color3.new(0.5,0.5,0.5) -- серый цвет
+                    v.Color3 = Color3.new(0.5,0.5,0.5)
                 elseif v:IsA("BasePart") then
                     v.Material = Enum.Material.SmoothPlastic
                     v.Color = Color3.new(0.5,0.5,0.5)
