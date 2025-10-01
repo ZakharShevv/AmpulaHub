@@ -240,19 +240,26 @@ MiscTab:CreateToggle({
     end,
 })
 
--- FPS Boost (без удаления персонажей игроков)
 MiscTab:CreateButton({
-    Name = "FPS Boost",
-    Callback = function()
-        for _,v in pairs(workspace:GetDescendants()) do
-            if not v:IsDescendantOf(player.Character) then
-                if v:IsA("Texture") or v:IsA("Decal") or v:IsA("MeshPart") or v:IsA("UnionOperation") or v:IsA("Part") or v:IsA("SpecialMesh") then
-                    v:Destroy()
-                end
-            end
-        end
-    end,
+ Name = "FPS Boost",
+ Callback = function()
+     for _,v in pairs(workspace:GetDescendants()) do
+         -- Игнорируем персонажей игроков
+         if not v:IsDescendantOf(player.Character) then
+             -- Затираем текстуры и декали одним цветом
+             if v:IsA("Texture") or v:IsA("Decal") then
+                 v.Color3 = Color3.new(0.5,0.5,0.5) -- серый цвет
+             end
+             -- Для частей заменяем материал и цвет
+             if v:IsA("BasePart") then
+                 v.Material = Enum.Material.SmoothPlastic
+                 v.Color = Color3.new(0.5,0.5,0.5)
+             end
+         end
+     end
+ end,
 })
+
 
 -- ReConnect
 MiscTab:CreateButton({
