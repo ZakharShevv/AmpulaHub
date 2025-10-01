@@ -57,6 +57,8 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- Fly с BodyVelocity
+local flyVelocity
 MainTab:CreateToggle({
     Name = "Toggle Fly",
     CurrentValue = false,
@@ -68,12 +70,26 @@ MainTab:CreateToggle({
 RunService.RenderStepped:Connect(function()
     if flyEnabled and character and character:FindFirstChild("HumanoidRootPart") then
         local hrp = character.HumanoidRootPart
-        local moveDir = humanoid.MoveDirection
-        hrp.Velocity = Vector3.new(moveDir.X * 50, 0, moveDir.Z * 50)
+        if not flyVelocity then
+            flyVelocity = Instance.new("BodyVelocity")
+            flyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+            flyVelocity.Velocity = Vector3.new(0,0,0)
+            flyVelocity.Parent = hrp
+        end
+
+        local moveDir = humanoid.MoveDirection * 50
+        local upDown = 0
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            hrp.Velocity = hrp.Velocity + Vector3.new(0, 50, 0)
+            upDown = 50
         elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            hrp.Velocity = hrp.Velocity + Vector3.new(0, -50, 0)
+            upDown = -50
+        end
+
+        flyVelocity.Velocity = Vector3.new(moveDir.X, upDown, moveDir.Z)
+    else
+        if flyVelocity then
+            flyVelocity:Destroy()
+            flyVelocity = nil
         end
     end
 end)
@@ -83,7 +99,7 @@ MainTab:CreateButton({
     Callback = function()
         refreshCharacter()
         if character and character:FindFirstChild("HumanoidRootPart") then
-            local spawnLocation = workspace:FindFirstChild("SpawnLocation")
+            local spawnLocation = player.SpawnLocation -- текущий спавн игрока
             if spawnLocation then
                 character.HumanoidRootPart.CFrame = spawnLocation.CFrame + Vector3.new(0,5,0)
             else
@@ -240,7 +256,7 @@ MiscTab:CreateToggle({
     end,
 })
 
--- FPS Boost (перекрашивание объектов, без удаления)
+-- FPS Boost (перекрашивание объектов)
 MiscTab:CreateButton({
     Name = "FPS Boost",
     Callback = function()
