@@ -4,12 +4,8 @@ local Window = Rayfield:CreateWindow({
    Name = "Ампула Hub",
    LoadingTitle = "Ампула Hub",
    LoadingSubtitle = "tg:@WISKASCCE",
-   ConfigurationSaving = {
-      Enabled = false
-   },
-   Discord = {
-      Enabled = false
-   }
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false }
 })
 
 local Players = game:GetService("Players")
@@ -18,7 +14,6 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local Lighting = game:GetService("Lighting")
-local ProximityPromptService = game:GetService("ProximityPromptService")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
@@ -33,18 +28,15 @@ local autoclickEnabled = false
 local cps = 10
 local infJump = false
 local fullBrightEnabled = false
-local instantInteractEnabled = false
 
+-- Обновление персонажа
 local function refreshCharacter()
     character = player.Character or player.CharacterAdded:Wait()
     humanoid = character:WaitForChild("Humanoid")
 end
+player.CharacterAdded:Connect(refreshCharacter)
 
-player.CharacterAdded:Connect(function(char)
-    character = char
-    humanoid = char:WaitForChild("Humanoid")
-end)
-
+-- Основное окно
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 MainTab:CreateSlider({
@@ -53,7 +45,6 @@ MainTab:CreateSlider({
     Increment = 1,
     Suffix = "Speed",
     CurrentValue = 16,
-    Flag = "SpeedSlider",
     Callback = function(Value)
         keepSpeed = Value
         if humanoid then humanoid.WalkSpeed = Value end
@@ -69,7 +60,6 @@ end)
 MainTab:CreateToggle({
     Name = "Toggle Fly",
     CurrentValue = false,
-    Flag = "FlyToggle",
     Callback = function(Value)
         flyEnabled = Value
     end,
@@ -103,12 +93,12 @@ MainTab:CreateButton({
     end,
 })
 
+-- Вкладка Others
 local OthersTab = Window:CreateTab("Others", 4483362458)
 
 OthersTab:CreateToggle({
     Name = "NoClip",
     CurrentValue = false,
-    Flag = "NoClipToggle",
     Callback = function(Value)
         noclip = Value
     end,
@@ -145,7 +135,6 @@ OthersTab:CreateButton({
 OthersTab:CreateToggle({
     Name = "BunnyHop",
     CurrentValue = false,
-    Flag = "BhopToggle",
     Callback = function(Value)
         bhopEnabled = Value
     end,
@@ -157,12 +146,12 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- Вкладка Misc
 local MiscTab = Window:CreateTab("Misc", 4483362458)
 
 MiscTab:CreateToggle({
     Name = "Anti-AFK",
     CurrentValue = true,
-    Flag = "AntiAFK",
     Callback = function(Value)
         if Value then
             player.Idled:Connect(function()
@@ -174,10 +163,10 @@ MiscTab:CreateToggle({
     end,
 })
 
+-- Безопасный автокликер
 MiscTab:CreateToggle({
     Name = "AutoClicker",
     CurrentValue = false,
-    Flag = "AutoClick",
     Callback = function(Value)
         autoclickEnabled = Value
     end,
@@ -189,7 +178,6 @@ MiscTab:CreateSlider({
     Increment = 1,
     Suffix = "CPS",
     CurrentValue = 10,
-    Flag = "CPSSlider",
     Callback = function(Value)
         cps = Value
     end,
@@ -198,8 +186,9 @@ MiscTab:CreateSlider({
 task.spawn(function()
     while true do
         if autoclickEnabled then
-            if not UserInputService:GetFocusedTextBox() then
-                mouse1click()
+            local target = mouse.Target
+            if target and not target:IsDescendantOf(player.PlayerGui) then
+                VirtualUser:ClickButton1(Vector2.new(0,0))
             end
             task.wait(1/cps)
         else
@@ -208,10 +197,10 @@ task.spawn(function()
     end
 end)
 
+-- Infinite Jump
 MiscTab:CreateToggle({
     Name = "Infinite Jump",
     CurrentValue = false,
-    Flag = "InfJump",
     Callback = function(Value)
         infJump = Value
     end,
@@ -223,22 +212,22 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
+-- Gravity
 MiscTab:CreateSlider({
     Name = "Gravity",
     Range = {0, 300},
     Increment = 10,
     Suffix = "G",
     CurrentValue = workspace.Gravity,
-    Flag = "GravitySlider",
     Callback = function(Value)
         workspace.Gravity = Value
     end,
 })
 
+-- FullBright
 MiscTab:CreateToggle({
     Name = "FullBright",
     CurrentValue = false,
-    Flag = "FullBright",
     Callback = function(Value)
         fullBrightEnabled = Value
         if Value then
@@ -251,17 +240,21 @@ MiscTab:CreateToggle({
     end,
 })
 
+-- FPS Boost (без удаления персонажей игроков)
 MiscTab:CreateButton({
     Name = "FPS Boost",
     Callback = function()
         for _,v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Texture") or v:IsA("Decal") then
-                v:Destroy()
+            if not v:IsDescendantOf(player.Character) then
+                if v:IsA("Texture") or v:IsA("Decal") or v:IsA("MeshPart") or v:IsA("UnionOperation") or v:IsA("Part") or v:IsA("SpecialMesh") then
+                    v:Destroy()
+                end
             end
         end
     end,
 })
 
+-- ReConnect
 MiscTab:CreateButton({
     Name = "ReConnect",
     Callback = function()
@@ -270,20 +263,5 @@ MiscTab:CreateButton({
         TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
     end,
 })
-
-MiscTab:CreateToggle({
-    Name = "Instant Interact",
-    CurrentValue = false,
-    Flag = "InstantInteract",
-    Callback = function(Value)
-        instantInteractEnabled = Value
-    end,
-})
-
-ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
-    if instantInteractEnabled then
-        fireproximityprompt(prompt)
-    end
-end)
 
 Rayfield:LoadConfiguration()
