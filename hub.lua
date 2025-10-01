@@ -29,7 +29,8 @@ local cps = 10
 local infJump = false
 local fullBrightEnabled = false
 
--- Выбранная точка телепорта мышью
+-- Телепорт
+local selectingPosition = false
 local targetPos = nil
 
 -- Обновление персонажа
@@ -97,21 +98,33 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Выбор точки мышью
-mouse.Button2Down:Connect(function()
-    if mouse.Target then
+-- Кнопка: Указать позицию
+MainTab:CreateButton({
+    Name = "Указать позицию",
+    Callback = function()
+        selectingPosition = true
+        print("Выбор позиции активирован. Кликните ЛКМ на карте.")
+    end
+})
+
+-- ЛКМ: Выбор позиции
+mouse.Button1Down:Connect(function()
+    if selectingPosition and mouse.Target then
         targetPos = mouse.Hit.Position
+        selectingPosition = false
         print("Точка телепорта выбрана:", targetPos)
     end
 end)
 
--- Кнопка телепорта на выбранную точку
+-- Кнопка: Телепорт на выбранную позицию
 MainTab:CreateButton({
-    Name = "Teleport to Mouse Point",
+    Name = "Телепорт на выбранную позицию",
     Callback = function()
         refreshCharacter()
         if targetPos and character and character:FindFirstChild("HumanoidRootPart") then
             character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0,3,0))
+        else
+            print("Сначала нужно указать позицию!")
         end
     end
 })
